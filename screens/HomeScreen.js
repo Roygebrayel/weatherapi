@@ -1,15 +1,31 @@
-
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { fetchWeatherData } from "../apis/weather";
+import * as Location from "expo-location";
 
 const HomeScreen = () => {
   const [weatherData, setWeatherData] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await fetchWeatherData("London");
-      setWeatherData(data);
+      try {
+        // Request permission to access location
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          console.error("Permission to access location was denied");
+          return;
+        }
+
+        // Get current location
+        const location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+
+        // Fetch weather data based on current location
+        const data = await fetchWeatherData(latitude, longitude);
+        setWeatherData(data);
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+      }
     };
     fetchData();
   }, []);
